@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dashboard-container {
+  @apply min-h-screen bg-gray-100 flex flex-col items-center justify-start py-10 px-4;
+}
+
+.dashboard-header {
+  @apply text-3xl font-bold mb-6 text-center text-blue-700;
+}
+
+.input-row {
+  @apply flex flex-col sm:flex-row items-center gap-4 mb-6 w-full max-w-lg;
+}
+
+.input-field {
+  @apply w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.search-button {
+  @apply px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition;
+}
+
+.student-card {
+  @apply bg-white p-6 rounded-lg shadow-md w-full max-w-2xl mb-8;
+}
+
+.student-info-title {
+  @apply text-xl font-semibold mb-4 text-gray-700 border-b pb-2;
+}
+
+.assignment-table {
+  @apply w-full text-sm border border-gray-300 rounded-md overflow-hidden;
+}
+
+.assignment-th {
+  @apply bg-blue-100 border px-4 py-2 text-left font-medium;
+}
+
+.assignment-td {
+  @apply border px-4 py-2;
+}
+
+.error-message {
+  @apply text-red-500 mt-4 text-center;
+}
