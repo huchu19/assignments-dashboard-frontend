@@ -2,12 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  position: relative;
+  @apply text-white font-sans;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/pexels2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+  transition: filter 0.5s ease;
+}
+
+body.filtered::before {
+  filter: blur(2px) brightness(0.8);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/pexels2.jpg');
+}
+
 .dashboard-container {
-  @apply min-h-screen bg-gray-100 flex flex-col items-center justify-start py-10 px-4;
+  @apply min-h-screen flex flex-col items-center justify-start py-12 px-4;
 }
 
 .dashboard-header {
-  @apply text-3xl font-bold mb-6 text-center text-blue-700;
+  @apply text-5xl font-black text-center text-white mb-10;
+}
+
+.clickable-title {
+  @apply cursor-pointer hover:text-pink-400 transition-colors duration-200;
+  @apply hover:scale-105 transform transition-transform duration-200;
 }
 
 .input-row {
@@ -15,33 +45,214 @@
 }
 
 .input-field {
-  @apply w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full sm:flex-1 px-4 py-2 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500;
 }
 
-.search-button {
-  @apply px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition;
+.search-button, .print-results-button {
+  @apply px-6 py-2 bg-pink-600 text-white font-semibold rounded-md hover:bg-pink-700 transition transform hover:scale-105 hover:shadow-pink-500/50;
+}
+
+.search-mode-toggle {
+  @apply flex gap-2 mb-6 justify-center;
+}
+
+.mode-btn {
+  @apply px-4 py-2 rounded-md font-semibold transition-all duration-200;
+  @apply bg-gray-700 text-gray-300 hover:bg-gray-600;
+}
+
+.mode-btn.active {
+  @apply bg-pink-600 text-white hover:bg-pink-700;
+}
+
+.bulk-search-container {
+  @apply flex flex-col items-center gap-4 mb-6 w-full max-w-lg;
+}
+
+.bulk-input-field {
+  @apply w-full px-4 py-3 bg-[#1a1a2e] border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none;
+  @apply font-mono text-sm;
+}
+
+.bulk-results-container {
+  @apply w-full max-w-6xl space-y-6;
+}
+
+.bulk-results-title {
+  @apply text-3xl font-bold text-center text-white mb-8;
+}
+
+.bulk-result-card {
+  @apply bg-[#181828]/60 backdrop-blur-xl p-6 rounded-xl shadow-lg ring-1 ring-pink-500/20;
+}
+
+.error-result {
+  @apply bg-red-900/20 border border-red-500/30 rounded-lg p-4;
+}
+
+.error-result h3 {
+  @apply text-red-400 font-semibold mb-2;
+}
+
+.error-text {
+  @apply text-red-300;
 }
 
 .student-card {
-  @apply bg-white p-6 rounded-lg shadow-md w-full max-w-2xl mb-8;
+  @apply bg-[#181828]/60 backdrop-blur-xl p-8 rounded-2xl shadow-2xl ring-2 ring-pink-500/30 w-full max-w-5xl mb-10;
 }
 
-.student-info-title {
-  @apply text-xl font-semibold mb-4 text-gray-700 border-b pb-2;
+.student-info-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-12 mb-6 text-center;
 }
 
+.student-info-label {
+  @apply text-white font-bold text-2xl;
+}
+
+.student-info-value {
+  @apply text-gray-50 font-bold text-2xl;
+}
 .assignment-table {
-  @apply w-full text-sm border border-gray-300 rounded-md overflow-hidden;
+  @apply w-full text-sm border border-white/20 rounded-md overflow-hidden mt-8 backdrop-blur-sm;
 }
 
 .assignment-th {
-  @apply bg-blue-100 border px-4 py-2 text-left font-medium;
+  @apply bg-white/10 text-lg font-semibold border border-white/20 px-4 py-2 text-center text-white backdrop-blur-sm;
 }
 
 .assignment-td {
-  @apply border px-4 py-2;
+  @apply border border-white/10 px-4 py-2 text-lg text-center text-white;
+}
+
+.assignment-td-even {
+  @apply bg-white/5 hover:bg-white/10 transition backdrop-blur-sm;
+}
+
+.assignment-td-odd {
+  @apply bg-black/20 hover:bg-white/10 transition backdrop-blur-sm;
 }
 
 .error-message {
-  @apply text-red-500 mt-4 text-center;
+  @apply text-xl text-red-400 mt-4 text-center;
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@media print {
+  * {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .student-card {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .input-row,
+  .search-button,
+  .print-results-button {
+    display: none !important;
+  }
+  /* Remove background images and overlays */
+  body::before, body::after {
+    display: none !important;
+  }
+  /* Remove default browser header/footer */
+  @page {
+    margin: 1cm;
+  }
+}
+
+.visualization-section {
+  @apply mt-8 space-y-8;
+}
+
+.viz-title {
+  @apply text-2xl font-bold text-pink-400 mb-6 border-b border-pink-700 pb-2;
+}
+
+.chart-container {
+  @apply bg-[#1a1a2e]/50 backdrop-blur-sm rounded-xl p-6 border border-white/10;
+}
+
+.chart-title {
+  @apply text-xl font-semibold text-white mb-4;
+}
+
+.progress-section {
+  @apply bg-[#1a1a2e]/50 backdrop-blur-sm rounded-xl p-6 border border-white/10;
+}
+
+.progress-grid {
+  @apply space-y-4;
+}
+
+.progress-item {
+  @apply space-y-2;
+}
+
+.progress-label {
+  @apply text-white font-medium;
+}
+
+.progress-bar-container {
+  @apply w-full bg-gray-700 rounded-full h-3 overflow-hidden;
+}
+
+.progress-bar {
+  @apply h-full bg-gradient-to-r from-pink-500 to-pink-600 rounded-full transition-all duration-500 ease-out;
+}
+
+.progress-value {
+  @apply text-sm text-gray-300 font-medium;
+}
+
+.summary-section {
+  @apply bg-[#1a1a2e]/50 backdrop-blur-sm rounded-xl p-6 border border-white/10;
+}
+
+.summary-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+}
+
+.summary-card {
+  @apply bg-white/5 backdrop-blur-sm rounded-lg p-4 text-center border border-white/10 hover:bg-white/10 transition;
+}
+
+.summary-number {
+  @apply text-2xl font-bold text-pink-400 mb-1;
+}
+
+.summary-label {
+  @apply text-sm text-gray-300;
+}
+.summary-label {
+  @apply text-sm text-gray-300;
+}
+
+.chart-responsive-wrapper {
+  height: 350px;
+}
+
+@media (max-width: 640px) {
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .chart-responsive-wrapper {
+    min-width: 350px;
+    width: 100vw;
+    overflow-x: auto;
+  }
+}
+
+

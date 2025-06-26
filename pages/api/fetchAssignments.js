@@ -16,35 +16,41 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    const spreadsheetId = '1XNmkdN14fQ6cKsFO-8RuoMNjcKAYSIBmtsCJTyRaVJA';
-    const range1 = 'Sheet1!A1:E500';
-    const range2 = 'Sheet1!H1:H500';
+    const spreadsheetId = '1oC010e49WUEUbu1x0k77_VjCpEPWETRpevoTSIIwcvU';
 
-    // Fetch A-E
-    const response1 = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: range1,
-    });
-    // Fetch H
-    const response2 = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: range2,
-    });
+    // ✅ Define ranges
+    const range1 = 'Sheet1!A1:E500';         // assignment data (A–E)
+    const range2 = 'Sheet1!H1:H500';         // Marks (H column)
+    const rangeAuth = 'Sheet2!A1:B400';      // ✅ NEW: Auth data (Sheet2)
 
-    const rows1 = response1.data.values || [];
-    const rows2 = response2.data.values || [];
-    // Merge rows: [A, B, C, D, E] + [H]
+    // ✅ Fetch all three in parallel
+    const [res1, res2, resAuth] = await Promise.all([
+      sheets.spreadsheets.values.get({ spreadsheetId, range: range1 }),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: range2 }),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: rangeAuth }) // ✅
+    ]);
+
+    const rows1 = res1.data.values || [];
+    const rows2 = res2.data.values || [];
+    const authRows = resAuth.data.values || []; // ✅
+
+    // Merge A–E and H
     const mergedRows = rows1.map((row, i) => {
       const h = rows2[i] ? rows2[i][0] : undefined;
       return [...row, h];
     });
+
     if (mergedRows.length) {
-      res.status(200).json({ data: mergedRows });
+      res.status(200).json({
+        assignments: mergedRows, // ✅ includes headers + merged data
+        auth: authRows           // ✅ includes secret codes from Sheet2
+      });
     } else {
-      res.status(404).json({ error: 'No data found in sheet.' });
+      res.status(404).json({ error: 'No assignment data found in sheet.' });
     }
+
   } catch (error) {
     console.error('Google Sheets API error:', error);
-    res.status(500).json({ error: 'Failed to fetch data from Google Sheet.' });
+    res.status(500).json({ error: 'Failed to fetch data from Google Sheets.' });
   }
 }
