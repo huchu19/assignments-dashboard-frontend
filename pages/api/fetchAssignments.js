@@ -1,4 +1,3 @@
-// pages/api/fetchAssignments.js
 import { google } from 'googleapis';
 import path from 'path';
 import fs from 'fs';
@@ -18,16 +17,16 @@ export default async function handler(req, res) {
 
     const spreadsheetId = '1oC010e49WUEUbu1x0k77_VjCpEPWETRpevoTSIIwcvU';
 
-    // ✅ Define ranges
+    // Define ranges
     const range1 = 'Sheet1!A1:E500';         // assignment data (A–E)
     const range2 = 'Sheet1!H1:H500';         // Marks (H column)
-    const rangeAuth = 'Sheet2!A1:B400';      // ✅ NEW: Auth data (Sheet2)
+    const rangeAuth = 'Sheet2!A1:B400';      // Auth data (Sheet2)
 
-    // ✅ Fetch all three in parallel
+    // Fetch all three in parallel
     const [res1, res2, resAuth] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId, range: range1 }),
       sheets.spreadsheets.values.get({ spreadsheetId, range: range2 }),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: rangeAuth }) // ✅
+      sheets.spreadsheets.values.get({ spreadsheetId, range: rangeAuth }) 
     ]);
 
     const rows1 = res1.data.values || [];
@@ -42,8 +41,8 @@ export default async function handler(req, res) {
 
     if (mergedRows.length) {
       res.status(200).json({
-        assignments: mergedRows, // ✅ includes headers + merged data
-        auth: authRows           // ✅ includes secret codes from Sheet2
+        assignments: mergedRows, // includes headers + merged data
+        auth: authRows           // includes secret codes from Sheet2
       });
     } else {
       res.status(404).json({ error: 'No assignment data found in sheet.' });

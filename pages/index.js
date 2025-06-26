@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from 'recharts';
 
 // Custom tick renderer for responsive XAxis
 const ResponsiveTick = (props) => {
@@ -23,14 +23,25 @@ const ResponsiveTick = (props) => {
   );
 };
 
+// Error Tooltip
+function ErrorTooltip({ message }) {
+  if (!message) return null;
+  return (
+    <div className="error-tooltip">
+      {message}
+    </div>
+  );
+}
+
+// Default Component
 export default function Home() {
   const [enrollment, setEnrollment] = useState('');
-  const [secretCode, setSecretCode] = useState(''); 
+  const [secretCode, setSecretCode] = useState('');
   const [filteredData, setFilteredData] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const [hasSearched, setHasSearched] = useState(false); // Track if search was attempted
-  const [credentialsValid, setCredentialsValid] = useState(false); // Track if credentials are valid
+  const [hasSearched, setHasSearched] = useState(false);
+  const [credentialsValid, setCredentialsValid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Autofocus enrollment input on page load
   useEffect(() => {
@@ -47,61 +58,77 @@ export default function Home() {
     }
   }, [filteredData]);
 
-  // Function to reset page to home state
-  const resetToHome = () => {
-    setFilteredData(null);
-    setEnrollment('');
-    setSecretCode('');
-    setHasSearched(false);
-    setCredentialsValid(false);
-    document.body.classList.remove('filtered');
-  };
+  // Helper to find auth row by enrollment  
+  function findAuthRow(auth, enrollment) {
+    return auth.find(row => row[0]?.trim() === enrollment.trim());
+  }
 
+  // Handle search
   const handleSearch = async () => {
     setLoading(true);
-    setHasSearched(true); 
-    setCredentialsValid(false); // Reset credentials validation
-  
-    try {
-      const res = await fetch("/api/fetchAssignments");
+    setHasSearched(true);
+    setCredentialsValid(false);
+    setFilteredData(null);
 
+    // Error: Both fields empty
+    if (!enrollment && !secretCode) {
+      setErrorMessage("Please enter both enrollment number and access key.");
+      setLoading(false);
+      return;
+    }
+    // Error: Enrollment number missing
+    if (!enrollment) {
+      setErrorMessage("Please enter your enrollment number.");
+      setLoading(false);
+      return;
+    }
+    // Error: Access key missing
+    if (!secretCode) {
+      setErrorMessage("Please enter your access key.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch assignments and auth data from API
+      const res = await fetch("/api/fetchAssignments");
       if (!res.ok) {
         throw new Error(`API error: ${res.status} ${res.statusText}`);
       }
-  
-      const { assignments, auth } = await res.json(); 
-  
+      const { assignments, auth } = await res.json();
       if (!assignments || !auth) throw new Error("Missing data from API");
 
-      // Secret Code 
+      // Find auth row for entered enrollment
       const authHeader = auth[0];
       const authRows = auth.slice(1);
-      const authMatch = authRows.find(
-        (row) =>
-          row[0]?.trim() === enrollment.trim() &&
-          row[1]?.trim() === secretCode.trim()
-      );
-
+      const authMatch = findAuthRow(authRows, enrollment);
+      // Error: Enrollment number not found
       if (!authMatch) {
-        setFilteredData(null);
+        setErrorMessage("Enrollment number not found.");
+        setLoading(false);
         return;
       }
-
+      // Error: Access key does not match
+      if (authMatch[1]?.trim() !== secretCode.trim()) {
+        setErrorMessage("Incorrect access key for this enrollment number.");
+        setLoading(false);
+        return;
+      }
       setCredentialsValid(true);
 
-      // Process assignment data
+      // Find assignment records for this enrollment
       const headers = assignments[0];
       const rows = assignments.slice(1);
-  
-      const matches = rows.filter(
-        (row) => row[0]?.trim() === enrollment.trim()
-      );
-  
+      const matches = rows.filter(row => row[0]?.trim() === enrollment.trim());
+      // Error: No assignments found for this enrollment
       if (!matches.length) {
+        setErrorMessage("No assignment records found for this enrollment number.");
         setFilteredData(null);
+        setLoading(false);
         return;
       }
-  
+
+      // Process assignment data for best attempts
       const assignmentMap = new Map();
       matches.forEach((row) => {
         const assignment = row[4];
@@ -110,14 +137,11 @@ export default function Home() {
           assignmentMap.set(assignment, marks);
         }
       });
-  
       const bestAttempts = Array.from(assignmentMap.entries()).map(
         ([assignment, marks]) => ({ assignment, marks })
       ).sort((a, b) => Number(a.assignment) - Number(b.assignment));
-  
       const totalMarks = bestAttempts.reduce((sum, a) => sum + a.marks, 0);
       const averageMarks = (totalMarks / bestAttempts.length).toFixed(2);
-  
       const result = {
         name: matches[0][1]?.trim() || "Unknown",
         phone: matches[0][3]?.trim() || "N/A",
@@ -126,13 +150,13 @@ export default function Home() {
         averageMarks,
         attempted: bestAttempts.length,
       };
-  
       setFilteredData(result);
-  
+      setErrorMessage("");
     } catch (err) {
-      alert("An error occurred while fetching assignment data. Check console for details.");
-      console.error("❌", err); 
+      // Error: API or unexpected error
+      setErrorMessage("An error occurred while fetching assignment data. Check console for details.");
       setFilteredData(null);
+      console.error("❌", err);
     } finally {
       setLoading(false);
     }
@@ -149,9 +173,43 @@ export default function Home() {
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
+  useEffect(() => {
+    if (!errorMessage) return;
+    // Auto-dismiss after 5 seconds
+    const timer = setTimeout(() => setErrorMessage(''), 5000);
+
+    // Dismiss on click anywhere
+    const handleClick = () => setErrorMessage('');
+    document.addEventListener('mousedown', handleClick);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClick);
+    };
+  }, [errorMessage]);
+
+  // Reset to home state
+  const resetToHome = () => {
+    setFilteredData(null);
+    setEnrollment('');
+    setSecretCode('');
+    setHasSearched(false);
+    setCredentialsValid(false);
+    setErrorMessage('');
+    document.body.classList.remove('filtered');
+  };
+
   // Main component
   return (
     <>
+      <a
+        href="https://datacrumbs.org/aismartgrader"
+        className="assignment-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Submit Assignment
+      </a>
       <Head>
         <title>Assignments Dashboard</title>
         <meta name="description" content="Check student assignment marks and attempts" />
@@ -177,7 +235,7 @@ export default function Home() {
             />
             <input
               className="input-field"
-              placeholder="Enter Secret Code"
+              placeholder="Enter Access key"
               value={secretCode}
               onChange={(e) => setSecretCode(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -189,6 +247,10 @@ export default function Home() {
         )}
 
         {loading && <p className="text-gray-500 text-center">Loading...</p>}
+
+        <ErrorTooltip
+          message={errorMessage}
+        />
 
         {filteredData && (
           <>
@@ -340,14 +402,7 @@ export default function Home() {
           </>
         )}
 
-        {!loading && filteredData === null && hasSearched && enrollment && (
-          <p className="error-message">
-            {credentialsValid 
-              ? "No assignment records found for this enrollment number." 
-              : "Incorrect enrollment number or secret code."
-            }
-          </p>
-        )}
+        
       </main>
     </>
   );
