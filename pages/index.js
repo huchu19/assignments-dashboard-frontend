@@ -202,14 +202,6 @@ export default function Home() {
   // Main component
   return (
     <>
-      <a
-        href="https://datacrumbs.org/aismartgrader"
-        className="assignment-link"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Submit Assignment
-      </a>
       <Head>
         <title>Assignments Dashboard</title>
         <meta name="description" content="Check student assignment marks and attempts" />
@@ -222,6 +214,15 @@ export default function Home() {
         >
           ASSIGNMENTS DASHBOARD
         </h1>
+
+        <a
+          href="https://datacrumbs.org/aismartgrader"
+          className="assignment-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Submit Assignment
+        </a>
 
         {!filteredData && (
           <div className="input-row">

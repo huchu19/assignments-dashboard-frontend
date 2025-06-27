@@ -294,6 +294,21 @@ body.filtered::before {
   transition: background 0.2s, color 0.2s;
   border: 2px solid #ec4899;
 }
+
+/* Mobile responsive positioning */
+@media (max-width: 640px) {
+  .assignment-link {
+    position: static;
+    display: block;
+    margin: 0 auto 2rem auto;
+    width: fit-content;
+    text-align: center;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    border-width: 1px;
+  }
+}
+
 .assignment-link:hover {
   background: #ec4899;
   color: #fff;
