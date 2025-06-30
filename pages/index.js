@@ -132,16 +132,21 @@ export default function Home() {
       const assignmentMap = new Map();
       matches.forEach((row) => {
         const assignment = row[4];
-        const marks = parseFloat(row[5]);
-        if (!assignmentMap.has(assignment) || marks > assignmentMap.get(assignment)) {
+        // If marks cell is empty or not a number, treat as null (Checking...)
+        const marksRaw = row[5];
+        const marks = marksRaw === undefined || marksRaw === null || marksRaw.toString().trim() === '' || isNaN(parseFloat(marksRaw)) ? null : parseFloat(marksRaw);
+        // Only update if marks is higher, or if marks is null (Checking...)
+        if (!assignmentMap.has(assignment) || (marks !== null && (assignmentMap.get(assignment) === null || marks > assignmentMap.get(assignment)))) {
           assignmentMap.set(assignment, marks);
         }
       });
       const bestAttempts = Array.from(assignmentMap.entries()).map(
         ([assignment, marks]) => ({ assignment, marks })
       ).sort((a, b) => Number(a.assignment) - Number(b.assignment));
-      const totalMarks = bestAttempts.reduce((sum, a) => sum + a.marks, 0);
-      const averageMarks = (totalMarks / bestAttempts.length).toFixed(2);
+      // For total/average, ignore null marks
+      const validAttempts = bestAttempts.filter(a => a.marks !== null);
+      const totalMarks = validAttempts.reduce((sum, a) => sum + a.marks, 0);
+      const averageMarks = validAttempts.length > 0 ? (totalMarks / validAttempts.length).toFixed(2) : '0.00';
       const result = {
         name: matches[0][1]?.trim() || "Unknown",
         phone: matches[0][3]?.trim() || "N/A",
@@ -283,7 +288,7 @@ export default function Home() {
                   {filteredData.assignments.map((a, i) => (
                     <tr key={i} className={i % 2 === 0 ? "assignment-td-even" : "assignment-td-odd"}>
                       <td className="assignment-td">{a.assignment}</td>
-                      <td className="assignment-td">{a.marks}</td>
+                      <td className="assignment-td">{a.marks === null ? <span className="checking-marks">Checking...</span> : a.marks}</td>
                     </tr>
                   ))}
                 </tbody>
